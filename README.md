@@ -1,1 +1,3 @@
 # StringExtractor
+
+このプログラムはFromTheDepthsの文字列を取得するために作りました。
