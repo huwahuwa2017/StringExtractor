@@ -6,5 +6,5 @@ C#で作られたexeやdllファイル内の文字列を抽出します。
 このプログラムはMono.CecilとNewtonsoft.JsonとClosedXMLを使用しています。
 
 Mono.Cecil : https://www.nuget.org/packages/Mono.Cecil/  
-Newtonsoft.Json : https://www.nuget.org/packages/Newtonsoft.Json/
+Newtonsoft.Json : https://www.nuget.org/packages/Newtonsoft.Json/  
 ClosedXML : https://www.nuget.org/packages/ClosedXML/
