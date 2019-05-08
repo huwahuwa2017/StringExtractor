@@ -1,6 +1,5 @@
 C:\Users\H170\Documents\GitHub\StringExtractor\StringExtractor\bin\Release\StringExtractor.exe.config
 C:\Users\H170\Documents\GitHub\StringExtractor\StringExtractor\bin\Release\StringExtractor.exe
-C:\Users\H170\Documents\GitHub\StringExtractor\StringExtractor\bin\Release\StringExtractor.pdb
 C:\Users\H170\Documents\GitHub\StringExtractor\StringExtractor\bin\Release\ClosedXML.dll
 C:\Users\H170\Documents\GitHub\StringExtractor\StringExtractor\bin\Release\DocumentFormat.OpenXml.dll
 C:\Users\H170\Documents\GitHub\StringExtractor\StringExtractor\bin\Release\ExcelNumberFormat.dll
@@ -21,4 +20,3 @@ C:\Users\H170\Documents\GitHub\StringExtractor\StringExtractor\obj\Release\Strin
 C:\Users\H170\Documents\GitHub\StringExtractor\StringExtractor\obj\Release\StringExtractor.csproj.CoreCompileInputs.cache
 C:\Users\H170\Documents\GitHub\StringExtractor\StringExtractor\obj\Release\StringExtractor.csproj.CopyComplete
 C:\Users\H170\Documents\GitHub\StringExtractor\StringExtractor\obj\Release\StringExtractor.exe
-C:\Users\H170\Documents\GitHub\StringExtractor\StringExtractor\obj\Release\StringExtractor.pdb
