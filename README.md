@@ -1,6 +1,6 @@
 # StringExtractor
 
-C#で作られたexeやdllファイル内の文字列を抽出します。
+C#で作られたexeやdllファイル内の文字列を抽出します。  
 このプログラムはFromTheDepthsの文字列を取得するために作りましたが、FromTheDepths以外でもおそらく使用可能です。
 
 このプログラムはMono.CecilとNewtonsoft.JsonとClosedXMLを使用しています。

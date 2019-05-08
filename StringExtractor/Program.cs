@@ -1,4 +1,5 @@
-﻿using Mono.Cecil;
+﻿using ClosedXML.Excel;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Newtonsoft.Json.Linq;
 using System;
@@ -12,17 +13,22 @@ namespace StringExtractor
 {
     public class Program
     {
-        private static string DLLPath = @"C:\Program Files (x86)\Steam\steamapps\common\From The Depths\From_The_Depths_Data\Managed\Ftd.dll";
+        private static XLWorkbook xlsxObject;
 
-        private static string OutputPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "StringExtraction.json");
+        private static JArray jsonObject;
 
-        private static JArray MainJObject = new JArray();
+        private static int Variable0;
 
 
 
         [STAThread]
         private static void Main(string[] args)
         {
+            string DLLPath = @"C:\Program Files (x86)\Steam\steamapps\common\From The Depths\From_The_Depths_Data\Managed\Ftd";
+            string OutputPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "StringExtraction");
+
+
+
             string Text0 = "DLLファイルを選択してください";
             Console.WriteLine(Text0);
 
@@ -52,7 +58,7 @@ namespace StringExtractor
                 Title = Text1,
                 InitialDirectory = Path.GetDirectoryName(OutputPath),
                 FileName = OutputPath,
-                Filter = "json files (*.json)|*.json|All files (*.*)|*.*"
+                Filter = "xlsx files (*.xlsx)|*.xlsx|json files (*.json)|*.json|All files (*.*)|*.*"
             };
 
             if (SFD.ShowDialog() == DialogResult.OK)
@@ -70,15 +76,25 @@ namespace StringExtractor
 
 
 
-            AssemblyDefinition AssemblyDef = AssemblyDefinition.ReadAssembly(DLLPath);
-            List<TypeDefinition> TypeDefList = AssemblyDef.Modules.SelectMany(x => x.Types).ToList();
+            string Extension = Path.GetExtension(OutputPath);
 
-            foreach (TypeDefinition TypeDef in TypeDefList)
+            if (Extension == ".xlsx")
             {
-                ShowString(TypeDef);
-            }
+                xlsxObject = new XLWorkbook();
+                xlsxObject.Worksheets.Add("Translation");
 
-            File.WriteAllText(OutputPath, MainJObject.ToString());
+                Start(Extension, DLLPath);
+
+                xlsxObject.SaveAs(OutputPath);
+            }
+            else
+            {
+                jsonObject = new JArray();
+
+                Start(Extension, DLLPath);
+
+                File.WriteAllText(OutputPath, jsonObject.ToString());
+            }
 
 
 
@@ -86,11 +102,22 @@ namespace StringExtractor
             Console.ReadKey();
         }
 
-        private static void ShowString(TypeDefinition TypeDef)
+        private static void Start(string Extension, string DLLPath)
+        {
+            AssemblyDefinition AssemblyDef = AssemblyDefinition.ReadAssembly(DLLPath);
+            List<TypeDefinition> TypeDefList = AssemblyDef.Modules.SelectMany(x => x.Types).ToList();
+
+            foreach (TypeDefinition TypeDef in TypeDefList)
+            {
+                ShowString(TypeDef, Extension);
+            }
+        }
+
+        private static void ShowString(TypeDefinition TypeDef, string Extension)
         {
             foreach (TypeDefinition NestedTypeDef in TypeDef.NestedTypes.ToList())
             {
-                ShowString(NestedTypeDef);
+                ShowString(NestedTypeDef, Extension);
             }
 
             foreach (MethodDefinition MethodDef in TypeDef.Methods)
@@ -105,27 +132,82 @@ namespace StringExtractor
                 string ParameterName = string.Join(",", MethodDef.Parameters.Select(x => x.ParameterType.FullName));
                 string MethodName = $"{MethodDef.Name}({ParameterName})";
 
-                JArray TextObject = null;
                 int Count0 = 0;
 
-                foreach (Instruction Ins in MethodDef.Body.Instructions)
+                if (Extension == ".xlsx")
                 {
-                    if (Ins.OpCode != OpCodes.Ldstr)
+                    IXLWorksheet Worksheet = xlsxObject.Worksheets.Worksheet("Translation");
+                    bool WritingStart = false;
+
+                    foreach (Instruction Ins in MethodDef.Body.Instructions)
                     {
-                        continue;
+                        if (Ins.OpCode != OpCodes.Ldstr)
+                        {
+                            continue;
+                        }
+
+                        string Text = Ins.Operand.ToString();
+
+                        if (Text == "")
+                        {
+                            ++Count0;
+                            continue;
+                        }
+
+                        Console.WriteLine(Text);
+
+                        if (!WritingStart)
+                        {
+                            WritingStart = true;
+                            Worksheet.Cell(++Variable0, 1).Value = NameSpaceName;
+                            Worksheet.Cell(++Variable0, 1).Value = TypeName;
+                            Worksheet.Cell(++Variable0, 1).Value = MethodName;
+                        }
+
+                        int Count1 = ++Variable0;
+                        Worksheet.Cell(Count1, 1).Value = Count0;
+                        Worksheet.Cell(Count1, 2).Value = Text;
+                        Worksheet.Cell(Count1, 3).Value = Text;
+
+                        ++Count0;
                     }
 
-                    string Text = Ins.Operand.ToString();
-                    Console.WriteLine(Text);
-                    TextObject = TextObject ?? (TextObject = new JArray { NameSpaceName, TypeName, MethodName });
-                    TextObject.Add(new JArray { Count0, Text, Text });
-
-                    ++Count0;
+                    if (WritingStart)
+                    {
+                        Worksheet.Cell(++Variable0, 1).Value = "--";
+                    }
                 }
-
-                if (TextObject != null)
+                else
                 {
-                    MainJObject.Add(TextObject);
+                    JArray TextObject = null;
+
+                    foreach (Instruction Ins in MethodDef.Body.Instructions)
+                    {
+                        if (Ins.OpCode != OpCodes.Ldstr)
+                        {
+                            continue;
+                        }
+
+                        string Text = Ins.Operand.ToString();
+
+                        if (Text == "")
+                        {
+                            ++Count0;
+                            continue;
+                        }
+
+                        Console.WriteLine(Text);
+
+                        TextObject = TextObject ?? (TextObject = new JArray { NameSpaceName, TypeName, MethodName });
+                        TextObject.Add(new JArray { Count0, Text, Text });
+
+                        ++Count0;
+                    }
+
+                    if (TextObject != null)
+                    {
+                        jsonObject.Add(TextObject);
+                    }
                 }
             }
         }

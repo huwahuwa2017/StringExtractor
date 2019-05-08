@@ -87,10 +87,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>move /y "$(TargetDir)$(TargetFileName)" "$(SolutionDir)\"
-move /y "$(TargetDir)Mono.Cecil.dll" "$(SolutionDir)\"
-move /y "$(TargetDir)Newtonsoft.Json.dll" "$(SolutionDir)\"
-rd /s /q "$(ProjectDir)bin"
-rd /s /q "$(ProjectDir)obj"</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>
