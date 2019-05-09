@@ -1,6 +1,6 @@
 # StringExtractor
 
-このプログラムはMono.CecilとNewtonsoft.JsonとClosedXMLを使用しています。
+このプログラムはClosedXMLとMono.CecilとNewtonsoft.Jsonを使用しています。
 
 ClosedXML : https://www.nuget.org/packages/ClosedXML/  
 Mono.Cecil : https://www.nuget.org/packages/Mono.Cecil/  
