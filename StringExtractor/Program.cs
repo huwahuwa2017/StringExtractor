@@ -1,7 +1,6 @@
 ﻿using ClosedXML.Excel;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,8 +13,6 @@ namespace StringExtractor
     public class Program
     {
         private static XLWorkbook xlsxObject;
-
-        private static JArray jsonObject;
 
         private static int Variable0;
 
@@ -58,7 +55,7 @@ namespace StringExtractor
                 Title = Text1,
                 InitialDirectory = Path.GetDirectoryName(OutputPath),
                 FileName = OutputPath,
-                Filter = "xlsx files (*.xlsx)|*.xlsx|json files (*.json)|*.json|All files (*.*)|*.*"
+                Filter = "xlsx files (*.xlsx)|*.xlsx|All files (*.*)|*.*"
             };
 
             if (SFD.ShowDialog() == DialogResult.OK)
@@ -75,49 +72,34 @@ namespace StringExtractor
             Console.ReadKey();
 
 
+            
+            xlsxObject = new XLWorkbook();
+            xlsxObject.Worksheets.Add("Translation");
+            Start(DLLPath);
+            xlsxObject.SaveAs(OutputPath);
 
-            string Extension = Path.GetExtension(OutputPath);
-
-            if (Extension == ".xlsx")
-            {
-                xlsxObject = new XLWorkbook();
-                xlsxObject.Worksheets.Add("Translation");
-
-                Start(Extension, DLLPath);
-
-                xlsxObject.SaveAs(OutputPath);
-            }
-            else
-            {
-                jsonObject = new JArray();
-
-                Start(Extension, DLLPath);
-
-                File.WriteAllText(OutputPath, jsonObject.ToString());
-            }
-
-
+            
 
             Console.WriteLine("\n文字列の抽出が完了しました　キー入力で終了します");
             Console.ReadKey();
         }
 
-        private static void Start(string Extension, string DLLPath)
+        private static void Start(string DLLPath)
         {
             AssemblyDefinition AssemblyDef = AssemblyDefinition.ReadAssembly(DLLPath);
             List<TypeDefinition> TypeDefList = AssemblyDef.Modules.SelectMany(x => x.Types).ToList();
 
             foreach (TypeDefinition TypeDef in TypeDefList)
             {
-                ShowString(TypeDef, Extension);
+                ShowString(TypeDef);
             }
         }
 
-        private static void ShowString(TypeDefinition TypeDef, string Extension)
+        private static void ShowString(TypeDefinition TypeDef)
         {
             foreach (TypeDefinition NestedTypeDef in TypeDef.NestedTypes.ToList())
             {
-                ShowString(NestedTypeDef, Extension);
+                ShowString(NestedTypeDef);
             }
 
             foreach (MethodDefinition MethodDef in TypeDef.Methods)
@@ -134,80 +116,45 @@ namespace StringExtractor
 
                 int Count0 = 0;
 
-                if (Extension == ".xlsx")
+                IXLWorksheet Worksheet = xlsxObject.Worksheets.Worksheet("Translation");
+                bool WritingStart = false;
+
+                foreach (Instruction Ins in MethodDef.Body.Instructions)
                 {
-                    IXLWorksheet Worksheet = xlsxObject.Worksheets.Worksheet("Translation");
-                    bool WritingStart = false;
-
-                    foreach (Instruction Ins in MethodDef.Body.Instructions)
+                    if (Ins.OpCode != OpCodes.Ldstr)
                     {
-                        if (Ins.OpCode != OpCodes.Ldstr)
-                        {
-                            continue;
-                        }
+                        continue;
+                    }
 
-                        string Text = Ins.Operand.ToString();
+                    string Text = Ins.Operand.ToString();
 
-                        if (Text == "")
-                        {
-                            ++Count0;
-                            continue;
-                        }
-
-                        Console.WriteLine(Text);
-
-                        if (!WritingStart)
-                        {
-                            WritingStart = true;
-                            Worksheet.Cell(++Variable0, 1).Value = NameSpaceName;
-                            Worksheet.Cell(++Variable0, 1).Value = TypeName;
-                            Worksheet.Cell(++Variable0, 1).Value = MethodName;
-                        }
-
-                        int Count1 = ++Variable0;
-                        Worksheet.Cell(Count1, 1).Value = Count0;
-                        Worksheet.Cell(Count1, 2).Value = Text;
-                        Worksheet.Cell(Count1, 3).Value = Text;
-
+                    if (string.IsNullOrWhiteSpace(Text))
+                    {
                         ++Count0;
+                        continue;
                     }
 
-                    if (WritingStart)
+                    Console.WriteLine(Text);
+
+                    if (!WritingStart)
                     {
-                        Worksheet.Cell(++Variable0, 1).Value = "--";
+                        WritingStart = true;
+                        Worksheet.Cell(++Variable0, 1).Value = NameSpaceName;
+                        Worksheet.Cell(++Variable0, 1).Value = TypeName;
+                        Worksheet.Cell(++Variable0, 1).Value = MethodName;
                     }
+
+                    int Count1 = ++Variable0;
+                    Worksheet.Cell(Count1, 1).Value = Count0;
+                    Worksheet.Cell(Count1, 2).Value = Text;
+                    Worksheet.Cell(Count1, 3).Value = Text;
+
+                    ++Count0;
                 }
-                else
+
+                if (WritingStart)
                 {
-                    JArray TextObject = null;
-
-                    foreach (Instruction Ins in MethodDef.Body.Instructions)
-                    {
-                        if (Ins.OpCode != OpCodes.Ldstr)
-                        {
-                            continue;
-                        }
-
-                        string Text = Ins.Operand.ToString();
-
-                        if (Text == "")
-                        {
-                            ++Count0;
-                            continue;
-                        }
-
-                        Console.WriteLine(Text);
-
-                        TextObject = TextObject ?? (TextObject = new JArray { NameSpaceName, TypeName, MethodName });
-                        TextObject.Add(new JArray { Count0, Text, Text });
-
-                        ++Count0;
-                    }
-
-                    if (TextObject != null)
-                    {
-                        jsonObject.Add(TextObject);
-                    }
+                    Worksheet.Cell(++Variable0, 1).Value = "--";
                 }
             }
         }
